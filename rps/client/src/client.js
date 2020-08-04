@@ -13,11 +13,11 @@ const writeEvent = (text) => {
 const onFormSubmitted = (e) => {
   e.preventDefault();
 
-  const input = document.querySelector('#chat');
+  const input = document.querySelector('#input');
   const text = input.value;
   input.value = '';
 
-  sock.emit('message', text);
+  sock.emit('input', text);
 };
 
 const addButtonListeners = () => {
@@ -29,13 +29,13 @@ const addButtonListeners = () => {
   });
 };
 
-writeEvent('Welcome to RPS');
+writeEvent('Welcome to Beer Game');
 
 const sock = io();
 sock.on('message', writeEvent);
 
 document
-  .querySelector('#chat-form')
+  .querySelector('#input-form')
   .addEventListener('submit', onFormSubmitted);
 
 addButtonListeners();

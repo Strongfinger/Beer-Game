@@ -16,19 +16,27 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 let waitingPlayer = null;
+let playerNumber = 1;
+let players = [];
+let roleByID = [];
+let role = ['Factory','Distributor','Wholesaler','Retailer']
 
 io.on('connection', (sock) => {
-
-  if (waitingPlayer) {
-    new RpsGame(waitingPlayer, sock);
+  waitingPlayer = sock;
+  waitingPlayer.emit('message', 'You are player '+playerNumber);
+  players[playerNumber] = waitingPlayer
+  roleByID[sock.id] = role[playerNumber-1]
+  if (playerNumber == 4) {
+    new RpsGame(players[1],players[2],players[3],players[4]);
     waitingPlayer = null;
+    playerNumber = 1;
+    players = []
   } else {
-    waitingPlayer = sock;
-    waitingPlayer.emit('message', 'Waiting for an opponent');
+    playerNumber+=1
   }
 
   sock.on('message', (text) => {
-    io.emit('message', text);
+    io.emit('message',roleByID[sock.id]+" : "+ text);
   });
 });
 
