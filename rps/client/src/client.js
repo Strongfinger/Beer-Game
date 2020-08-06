@@ -10,6 +10,21 @@ const writeEvent = (text) => {
   parent.appendChild(el);
 };
 
+const updateStock = (data) => {
+  const stock = document.querySelector('#stock')
+  stock.innerHTML = data
+}
+
+const updateOrder = (data) =>{
+  const order = document.querySelector('#order')
+  order.innerHTML = data
+}
+
+const updateBacklog = (data) =>{
+  const backlog = document.querySelector('#backlog')
+  backlog.innerHTML = data
+}
+
 const onFormSubmitted = (e) => {
   e.preventDefault();
 
@@ -31,8 +46,16 @@ const addButtonListeners = () => {
 
 writeEvent('Welcome to Beer Game');
 
+
 const sock = io();
 sock.on('message', writeEvent);
+sock.on('stock info', updateStock);
+sock.on('order info',updateOrder);
+sock.on('backlog info',updateBacklog);
+sock.on('week update',(msg)=>{
+  const week = document.querySelector('#week')
+  week.innerHTML = msg
+})
 
 document
   .querySelector('#input-form')

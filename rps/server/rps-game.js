@@ -88,6 +88,7 @@ class RpsGame {
       currentPlayer.stock+=currentPlayer.shippingDelay1
       currentPlayer.shippingDelay1 = currentPlayer.shippingDelay2
     });
+    this._updateData()
     this._retailerCheck();
     this._wholesalerCheck();
     this._distributorCheck();
@@ -95,6 +96,7 @@ class RpsGame {
     this._playerDetail['Wholesaler'].order = this._playerDetail['Retailer'].request
     this._playerDetail['Distributor'].order = this._playerDetail['Wholesaler'].request
     this._playerDetail['Factory'].order = this._playerDetail['Distributor'].request
+    
     
   }
 
@@ -110,9 +112,16 @@ class RpsGame {
     this._sendToPlayers('Next turn!!!!');
     this._players.forEach((player, idx) => {
       var currentPlayer = this._playerDetail[this._role[idx]]
+      var record = {
+        stock : currentPlayer.stock,
+        backlog : currentPlayer.backlog,
+        request : currentPlayer.request
+      }
+      currentPlayer.record[this._gameStat.currentWeek] = record
       console.log(currentPlayer)
     });
-    this._startTurn();
+    this._checkGameOver();
+    
   }
 
   _checkTurnOver(){
@@ -127,36 +136,25 @@ class RpsGame {
     }
   }
   _checkGameOver() {
-    const turns = this._turns;
-
-    if (turns[0] && turns[1]) {
-      this._sendToPlayers('Game over ' + turns.join(' : '));
-      this._getGameResult();
-      this._turns = [null, null];
-      this._sendToPlayers('Next Round!!!!');
+    if (this._gameStat.currentWeek >=2){
+      this._getGameResult()
+    }else{
+      this._startTurn();
     }
   }
 
   _getGameResult() {
-
-    const p0 = this._decodeTurn(this._turns[0]);
-    const p1 = this._decodeTurn(this._turns[1]);
-
-    const distance = (p1 - p0 + 3) % 3;
-
-    switch (distance) {
-      case 0:
-        this._sendToPlayers('Draw!');
-        break;
-
-      case 1:
-        this._sendWinMessage(this._players[0], this._players[1]);
-        break;
-
-      case 2:
-        this._sendWinMessage(this._players[1], this._players[0]);
-        break;
-    }
+    var totalCost = 0;
+    this._players.forEach((player, idx) => {
+      var currentPlayer = this._playerDetail[this._role[idx]]
+      var cost = 0;
+      for(var week = 1;week<=this._gameStat.currentWeek;week++){
+        cost += (currentPlayer.record[week].stock+(currentPlayer.record[week].backlog)*2)*100
+      }
+      this._sendToPlayer(idx,'Your cost : '+cost)
+      totalCost+=cost
+    });
+    this._sendToPlayers('Total cost is '+totalCost)
   }
 
   _getRandomOrder(){
@@ -222,23 +220,16 @@ class RpsGame {
     currentPlayer.shippingDelay2 = currentPlayer.request
   }
 
-  _sendWinMessage(winner, loser) {
-    winner.emit('message', 'You won!');
-    loser.emit('message', 'You lost.');
+  _updateData(){
+    this._players.forEach((player, idx) => {
+      var currentPlayer = this._playerDetail[this._role[idx]]
+      player.emit('week update','Week : '+this._gameStat.currentWeek)
+      player.emit('stock info','Current stock : '+currentPlayer.stock)
+      player.emit('order info','Order incoming : '+currentPlayer.order)
+      player.emit('backlog info', 'Backlog : '+currentPlayer.backlog)
+    });
   }
 
-  _decodeTurn(turn) {
-    switch (turn) {
-      case 'rock':
-        return 0;
-      case 'scissors':
-        return 1;
-      case 'paper':
-        return 2;
-      default:
-        throw new Error(`Could not decode turn ${turn}`);
-    }
-  }
 
 
 }
